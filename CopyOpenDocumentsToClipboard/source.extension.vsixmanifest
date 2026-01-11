@@ -1,22 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
-  <Metadata>
-    <Identity Id="CopyOpenDocumentsToClipboard.8a9c77db-07d0-4768-b065-0c356fe9f2a5" Version="1.0" Language="en-US" Publisher="Danny Chu" />
-    <DisplayName>CopyOpenDocumentsToClipboard</DisplayName>
-    <Description>Empty VSIX Project.</Description>
-  </Metadata>
-  <Installation>
-    <InstallationTarget Id="Microsoft.VisualStudio.Community" Version="[17.0, 18.0)">
-      <ProductArchitecture>amd64</ProductArchitecture>
-    </InstallationTarget>
-  </Installation>
-  <Dependencies>
-    <Dependency Id="Microsoft.Framework.NDP" DisplayName="Microsoft .NET Framework" d:Source="Manual" Version="[4.5,)" />
-  </Dependencies>
-  <Prerequisites>
-    <Prerequisite Id="Microsoft.VisualStudio.Component.CoreEditor" Version="[17.0,18.0)" DisplayName="Visual Studio core editor" />
-  </Prerequisites>
-  <Assets>
-    <Asset Type="Microsoft.VisualStudio.VsPackage" d:Source="Project" d:ProjectName="%CurrentProject%" Path="|%CurrentProject%;PkgdefProjectOutputGroup|" />
-  </Assets>
+    <Metadata>
+        <Identity Id="CopyOpenDocumentsToClipboard.8a9c77db-07d0-4768-b065-0c356fe9f2a5" Version="1.0" Language="en-US" Publisher="Danny Chu" />
+        <DisplayName>Copy Open Documents To Clipboard</DisplayName>
+        <Description xml:space="preserve">This extension saves you time by eliminating manual copy-paste when sending multi-file code context to LLMs like ChatGPT
+
+Copies the full contents of all currently open documents in Visual Studio to the clipboard in a structured format. 
+
+Use "Tools → Copy open documents to Clipboard" to copy everything to your clipboard.
+
+</Description>
+    </Metadata>
+    <Installation>
+        <InstallationTarget Id="Microsoft.VisualStudio.Community" Version="[17.0, 18.0)">
+            <ProductArchitecture>amd64</ProductArchitecture>
+        </InstallationTarget>
+    </Installation>
+    <Dependencies>
+        <Dependency Id="Microsoft.Framework.NDP" DisplayName="Microsoft .NET Framework" d:Source="Manual" Version="[4.5,)" />
+    </Dependencies>
+    <Prerequisites>
+        <Prerequisite Id="Microsoft.VisualStudio.Component.CoreEditor" Version="[17.0,18.0)" DisplayName="Visual Studio core editor" />
+    </Prerequisites>
+    <Assets>
+        <Asset Type="Microsoft.VisualStudio.VsPackage" d:Source="Project" d:ProjectName="%CurrentProject%" Path="|%CurrentProject%;PkgdefProjectOutputGroup|" />
+    </Assets>
 </PackageManifest>
