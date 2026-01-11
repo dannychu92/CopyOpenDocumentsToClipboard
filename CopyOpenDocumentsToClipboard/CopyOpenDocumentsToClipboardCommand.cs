@@ -102,15 +102,80 @@ namespace CopyOpenDocumentsToClipboard
 
                     var displayPath = doc.FullName ?? doc.Name;
 
-                    if (string.IsNullOrWhiteSpace(solutionDir) == false && string.IsNullOrWhiteSpace(doc.FullName) == false)
+                    // Prefer project-relative paths: "<ProjectName>/path/inside/project"
+                    if (string.IsNullOrWhiteSpace(doc.FullName) == false)
                     {
                         try
                         {
-                            var full = doc.FullName;
-                            var dir = solutionDir.TrimEnd('\\') + "\\";
-                            if (full.StartsWith(dir, StringComparison.OrdinalIgnoreCase))
+                            EnvDTE.ProjectItem projectItem = null;
+
+                            try
                             {
-                                displayPath = full.Substring(dir.Length);
+                                if (dte.Solution != null)
+                                {
+                                    projectItem = dte.Solution.FindProjectItem(doc.FullName);
+                                }
+                            }
+                            catch
+                            {
+                                projectItem = null;
+                            }
+
+                            var owningProject = projectItem != null ? projectItem.ContainingProject : null;
+
+                            if (owningProject != null && string.IsNullOrWhiteSpace(owningProject.FullName) == false)
+                            {
+                                var projectDir = System.IO.Path.GetDirectoryName(owningProject.FullName) ?? "";
+                                if (string.IsNullOrWhiteSpace(projectDir) == false)
+                                {
+                                    string relativeToProject;
+
+                                    try
+                                    {
+                                        relativeToProject = MakeRelativePath(projectDir, doc.FullName);
+                                    }
+                                    catch
+                                    {
+                                        relativeToProject = doc.FullName;
+                                    }
+
+                                    relativeToProject = relativeToProject.Replace('\\', '/').TrimStart('/');
+
+                                    var projectName = owningProject.Name ?? "";
+                                    if (string.IsNullOrWhiteSpace(projectName) == false)
+                                    {
+                                        displayPath = projectName + "/" + relativeToProject;
+                                    }
+                                    else
+                                    {
+                                        displayPath = relativeToProject;
+                                    }
+                                }
+                            }
+                            else if (string.IsNullOrWhiteSpace(solutionDir) == false)
+                            {
+                                // Fallback: solution-relative
+                                try
+                                {
+                                    var full = doc.FullName;
+                                    var dir = solutionDir.TrimEnd('\\') + "\\";
+                                    if (full.StartsWith(dir, StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        displayPath = full.Substring(dir.Length).Replace('\\', '/');
+                                    }
+                                    else
+                                    {
+                                        displayPath = full.Replace('\\', '/');
+                                    }
+                                }
+                                catch
+                                {
+                                    displayPath = doc.FullName ?? doc.Name;
+                                }
+                            }
+                            else
+                            {
+                                displayPath = doc.FullName ?? doc.Name;
                             }
                         }
                         catch
@@ -150,6 +215,33 @@ namespace CopyOpenDocumentsToClipboard
 
                 System.Windows.Forms.Clipboard.SetText(sb.ToString());
             });
+        }
+
+        static string MakeRelativePath(string baseDir, string fullPath)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(baseDir) || string.IsNullOrWhiteSpace(fullPath))
+                    return fullPath;
+
+                if (baseDir.EndsWith("\\") == false)
+                    baseDir += "\\";
+
+                var baseUri = new Uri(baseDir, UriKind.Absolute);
+                var fileUri = new Uri(fullPath, UriKind.Absolute);
+
+                if (baseUri.Scheme != fileUri.Scheme)
+                    return fullPath;
+
+                var relativeUri = baseUri.MakeRelativeUri(fileUri);
+                var relativePath = Uri.UnescapeDataString(relativeUri.ToString());
+
+                return relativePath.Replace('/', '\\');
+            }
+            catch
+            {
+                return fullPath;
+            }
         }
 
     }
