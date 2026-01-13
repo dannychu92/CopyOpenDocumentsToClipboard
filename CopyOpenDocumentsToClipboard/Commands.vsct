@@ -1,35 +1,58 @@
 <?xml version="1.0" encoding="utf-8"?>
 <CommandTable xmlns="http://schemas.microsoft.com/VisualStudio/2005-10-18/CommandTable">
 
-  <Extern href="stdidcmd.h" />
-  <Extern href="vsshlids.h" />
+	<Extern href="stdidcmd.h" />
+	<Extern href="vsshlids.h" />
 
-  <Commands package="guidPackage">
-    <Groups>
-      <Group guid="guidCommandSet" id="MyGroup" priority="0x0600">
-        <Parent guid="guidSHLMainMenu" id="IDM_VS_MENU_TOOLS"/>
-      </Group>
-    </Groups>
+	<Commands package="guidPackage">
+		<Groups>
+			<!-- Tools menu group -->
+			<Group guid="guidCommandSet" id="MyGroup" priority="0x0600">
+				<Parent guid="guidSHLMainMenu" id="IDM_VS_MENU_TOOLS"/>
+			</Group>
 
-    <Buttons>
-      <Button guid="guidCommandSet" id="CopyOpenDocuments" priority="0x0100" type="Button">
-        <Parent guid="guidCommandSet" id="MyGroup"/>
-        <Strings>
-          <ButtonText>Copy open documents to Clipboard</ButtonText>
-        </Strings>
-      </Button>
-    </Buttons>
-  </Commands>
+			<!-- Document tab (document window) context menu group -->
+			<Group guid="guidCommandSet" id="MyTabGroup" priority="0x0600">
+				<Parent guid="DocumentWindowCommandSet" id="DocumentContextMenu"/>
+			</Group>
+		</Groups>
 
-  <Symbols>
-    <!-- Must match CopyOpenDocumentsToClipboardPackage.PackageGuidString -->
-    <GuidSymbol name="guidPackage" value="{8716c4fc-4f25-4908-83ff-b00ef81d3422}" />
+		<Buttons>
+			<!-- Existing: copy ALL open documents (Tools menu) -->
+			<Button guid="guidCommandSet" id="CopyOpenDocuments" priority="0x0100" type="Button">
+				<Parent guid="guidCommandSet" id="MyGroup"/>
+				<Strings>
+					<ButtonText>Copy open documents to Clipboard</ButtonText>
+				</Strings>
+			</Button>
 
-    <!-- Must match CopyOpenDocumentsToClipboardCommand.CommandSet -->
-    <GuidSymbol name="guidCommandSet" value="{c0bdb4d1-17b6-4a33-9f06-2d73f6d3c3a7}">
-      <IDSymbol name="MyGroup" value="0x1020" />
-      <IDSymbol name="CopyOpenDocuments" value="0x0100" />
-    </GuidSymbol>
-  </Symbols>
+			<!-- New: copy SINGLE document (tab right-click menu) -->
+			<Button guid="guidCommandSet" id="CopySingleDocument" priority="0x0100" type="Button">
+				<Parent guid="guidCommandSet" id="MyTabGroup"/>
+				<Strings>
+					<ButtonText>Copy document to Clipboard</ButtonText>
+				</Strings>
+			</Button>
+		</Buttons>
+	</Commands>
+
+	<Symbols>
+		<!-- Must match CopyOpenDocumentsToClipboardPackage.PackageGuidString -->
+		<GuidSymbol name="guidPackage" value="{8716c4fc-4f25-4908-83ff-b00ef81d3422}" />
+
+		<!-- Must match CopyOpenDocumentsToClipboardCommand.CommandSet -->
+		<GuidSymbol name="guidCommandSet" value="{c0bdb4d1-17b6-4a33-9f06-2d73f6d3c3a7}">
+			<IDSymbol name="MyGroup" value="0x1020" />
+			<IDSymbol name="MyTabGroup" value="0x1021" />
+
+			<IDSymbol name="CopyOpenDocuments" value="0x0100" />
+			<IDSymbol name="CopySingleDocument" value="0x0101" />
+		</GuidSymbol>
+
+		<!-- Document Window / Tab context menu parent -->
+		<GuidSymbol name="DocumentWindowCommandSet" value="{D309F791-903F-11D0-9EFC-00A0C911004F}">
+			<IDSymbol name="DocumentContextMenu" value="0x042b"/>
+		</GuidSymbol>
+	</Symbols>
 
 </CommandTable>
