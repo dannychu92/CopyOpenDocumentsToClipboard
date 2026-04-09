@@ -10,6 +10,7 @@ namespace CopyOpenDocumentsToClipboard
     {
         public const int CommandId_CopyAllOpenDocuments = 0x0100;
         public const int CommandId_CopySingleDocument = 0x0101;
+        public const int CommandId_CopyAllOpenDocumentFilePaths = 0x0102;
 
         public static readonly Guid CommandSet = new Guid("c0bdb4d1-17b6-4a33-9f06-2d73f6d3c3a7");
 
@@ -28,6 +29,11 @@ namespace CopyOpenDocumentsToClipboard
             var menuCommandIdCopySingle = new CommandID(CommandSet, CommandId_CopySingleDocument);
             var menuItemCopySingle = new OleMenuCommand(ExecuteCopySingleDocument, menuCommandIdCopySingle);
             commandService.AddCommand(menuItemCopySingle);
+
+            // Tools -> Copy open document file paths to Clipboard
+            var menuCommandIdCopyAllFilePaths = new CommandID(CommandSet, CommandId_CopyAllOpenDocumentFilePaths);
+            var menuItemCopyAllFilePaths = new OleMenuCommand(ExecuteCopyAllOpenDocumentFilePaths, menuCommandIdCopyAllFilePaths);
+            commandService.AddCommand(menuItemCopyAllFilePaths);
         }
 
         public static CopyOpenDocumentsToClipboardCommand Instance { get; private set; }
@@ -124,6 +130,54 @@ namespace CopyOpenDocumentsToClipboard
 
                 System.Windows.Forms.Clipboard.SetText(block);
             }).FileAndForget("CopyOpenDocumentsToClipboard/ExecuteCopySingleDocument");
+        }
+
+        private void ExecuteCopyAllOpenDocumentFilePaths(object sender, EventArgs e)
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+
+            _package.JoinableTaskFactory.RunAsync(async () =>
+            {
+                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+
+                var dte = await GetDteAsync();
+                if (dte == null)
+                    return;
+
+                var sb = new StringBuilder();
+                var addedAny = false;
+
+                for (int i = 1; i <= dte.Documents.Count; i++)
+                {
+                    EnvDTE.Document doc;
+
+                    try
+                    {
+                        doc = dte.Documents.Item(i);
+                    }
+                    catch
+                    {
+                        continue;
+                    }
+
+                    if (doc == null)
+                        continue;
+
+                    if (string.IsNullOrWhiteSpace(doc.FullName))
+                        continue;
+
+                    if (addedAny == true)
+                        sb.AppendLine();
+
+                    sb.Append(doc.FullName);
+                    addedAny = true;
+                }
+
+                if (addedAny == false)
+                    return;
+
+                System.Windows.Forms.Clipboard.SetText(sb.ToString());
+            }).FileAndForget("CopyOpenDocumentsToClipboard/ExecuteCopyAllOpenDocumentFilePaths");
         }
 
 

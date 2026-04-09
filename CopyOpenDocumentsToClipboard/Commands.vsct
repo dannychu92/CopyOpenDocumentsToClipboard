@@ -26,6 +26,13 @@
 				</Strings>
 			</Button>
 
+			<Button guid="guidCommandSet" id="CopyOpenDocumentFilePaths" priority="0x0110" type="Button">
+				<Parent guid="guidCommandSet" id="MyGroup"/>
+				<Strings>
+					<ButtonText>Copy open document filepaths to Clipboard</ButtonText>
+				</Strings>
+			</Button>
+
 			<!-- New: copy SINGLE document (tab right-click menu) -->
 			<Button guid="guidCommandSet" id="CopySingleDocument" priority="0x0100" type="Button">
 				<Parent guid="guidCommandSet" id="MyTabGroup"/>
@@ -47,6 +54,7 @@
 
 			<IDSymbol name="CopyOpenDocuments" value="0x0100" />
 			<IDSymbol name="CopySingleDocument" value="0x0101" />
+			<IDSymbol name="CopyOpenDocumentFilePaths" value="0x0102" />
 		</GuidSymbol>
 
 		<!-- Document Window / Tab context menu parent -->
