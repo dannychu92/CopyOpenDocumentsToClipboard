@@ -10,6 +10,7 @@ namespace CopyOpenDocumentsToClipboard
     {
         public const int CommandId_CopyAllOpenDocuments = 0x0100;
         public const int CommandId_CopySingleDocument = 0x0101;
+        public const int CommandId_CopyAllOpenDocumentFilePaths = 0x0102;
 
         public static readonly Guid CommandSet = new Guid("c0bdb4d1-17b6-4a33-9f06-2d73f6d3c3a7");
 
@@ -28,6 +29,11 @@ namespace CopyOpenDocumentsToClipboard
             var menuCommandIdCopySingle = new CommandID(CommandSet, CommandId_CopySingleDocument);
             var menuItemCopySingle = new OleMenuCommand(ExecuteCopySingleDocument, menuCommandIdCopySingle);
             commandService.AddCommand(menuItemCopySingle);
+
+            // Tools -> Copy open document file paths to Clipboard
+            var menuCommandIdCopyAllFilePaths = new CommandID(CommandSet, CommandId_CopyAllOpenDocumentFilePaths);
+            var menuItemCopyAllFilePaths = new OleMenuCommand(ExecuteCopyAllOpenDocumentFilePaths, menuCommandIdCopyAllFilePaths);
+            commandService.AddCommand(menuItemCopyAllFilePaths);
         }
 
         public static CopyOpenDocumentsToClipboardCommand Instance { get; private set; }
@@ -126,7 +132,107 @@ namespace CopyOpenDocumentsToClipboard
             }).FileAndForget("CopyOpenDocumentsToClipboard/ExecuteCopySingleDocument");
         }
 
+        private void ExecuteCopyAllOpenDocumentFilePaths(object sender, EventArgs e)
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
 
+            _package.JoinableTaskFactory.RunAsync(async () =>
+            {
+                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+
+                var dte = await GetDteAsync();
+                if (dte == null)
+                    return;
+
+                var solutionDir = TryGetSolutionDir(dte);
+
+                var sb = new StringBuilder();
+                var addedAny = false;
+
+                for (int i = 1; i <= dte.Documents.Count; i++)
+                {
+                    EnvDTE.Document doc;
+
+                    try
+                    {
+                        doc = dte.Documents.Item(i);
+                    }
+                    catch
+                    {
+                        continue;
+                    }
+
+                    if (doc == null)
+                        continue;
+
+                    var displayPath = GetProjectRelativePath(dte, doc, solutionDir);
+                    if (string.IsNullOrWhiteSpace(displayPath))
+                        continue;
+
+                    if (addedAny)
+                        sb.AppendLine();
+
+                    sb.Append(displayPath.Replace('/', '\\')); // <-- Windows style
+
+                    addedAny = true;
+                }
+
+                if (!addedAny)
+                    return;
+
+                System.Windows.Forms.Clipboard.SetText(sb.ToString());
+            }).FileAndForget("CopyOpenDocumentsToClipboard/ExecuteCopyAllOpenDocumentFilePaths");
+        }
+
+        private static string GetProjectRelativePath(EnvDTE80.DTE2 dte, EnvDTE.Document doc, string solutionDir)
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+
+            if (string.IsNullOrWhiteSpace(doc.FullName))
+                return doc.Name;
+
+            try
+            {
+                EnvDTE.ProjectItem projectItem = null;
+
+                try
+                {
+                    if (dte.Solution != null)
+                        projectItem = dte.Solution.FindProjectItem(doc.FullName);
+                }
+                catch { }
+
+                var project = projectItem?.ContainingProject;
+
+                if (project != null && !string.IsNullOrWhiteSpace(project.FullName))
+                {
+                    var projectDir = System.IO.Path.GetDirectoryName(project.FullName) ?? "";
+
+                    if (!string.IsNullOrWhiteSpace(projectDir))
+                    {
+                        var relative = MakeRelativePath(projectDir, doc.FullName)
+                            .Replace('\\', '/')
+                            .TrimStart('/');
+
+                        return $"{project.Name}/{relative}";
+                    }
+                }
+
+                // fallback: solution-relative
+                if (!string.IsNullOrWhiteSpace(solutionDir))
+                {
+                    var dir = solutionDir.TrimEnd('\\') + "\\";
+
+                    if (doc.FullName.StartsWith(dir, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return doc.FullName.Substring(dir.Length).Replace('\\', '/');
+                    }
+                }
+            }
+            catch { }
+
+            return doc.FullName;
+        }
 
         private async Task<EnvDTE80.DTE2> GetDteAsync()
         {
